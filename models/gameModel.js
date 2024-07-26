@@ -2,15 +2,19 @@ class WhackAMoleModel {
     constructor() {
         this.score = 0;
         this.time = 30;
-        this.board = Array(12).fill().map((_, i) => ({ id: i, hasMole: false }));
+        this.board = Array(12).fill().map((_, i) => ({ id: i, hasMole: false, hasSnake: false }));
         this.timerId = null;
         this.moleId = null;
+        this.snakeId = null;
     }
 
     reset() {
         this.score = 0;
         this.time = 30;
-        this.board.forEach(cell => cell.hasMole = false);
+        this.board.forEach(cell => {
+            cell.hasMole = false;
+            cell.hasSnake = false;
+        });
     }
 
     startTimer(onTick, onEnd) {
@@ -28,22 +32,42 @@ class WhackAMoleModel {
     stopAll() {
         clearInterval(this.timerId);
         clearInterval(this.moleId);
+        clearInterval(this.snakeId);
         this.timerId = null;
         this.moleId = null;
+        this.snakeId = null;
     }
 
-    startMoleGeneration(onMoleAppear) {
+    startMoleGeneration(onMoleAppear, onMoleDisappear) {
         this.moleId = setInterval(() => {
             const activeMoles = this.board.filter(cell => cell.hasMole).length;
             if (activeMoles < 3) {
                 let randomIndex;
                 do {
                     randomIndex = Math.floor(Math.random() * 12);
-                } while (this.board[randomIndex].hasMole);
+                } while (this.board[randomIndex].hasMole || this.board[randomIndex].hasSnake);
                 this.board[randomIndex].hasMole = true;
                 onMoleAppear(randomIndex);
+                setTimeout(() => {
+                    if (this.board[randomIndex].hasMole) {
+                        this.board[randomIndex].hasMole = false;
+                        onMoleDisappear(randomIndex);
+                    }
+                }, 2000);
             }
         }, 1000);
+    }
+
+    startSnakeGeneration(onSnakeAppear) {
+        this.snakeId = setInterval(() => {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * 12);
+            } while (this.board[randomIndex].hasMole);
+            this.board.forEach(cell => cell.hasSnake = false);
+            this.board[randomIndex].hasSnake = true;
+            onSnakeAppear(randomIndex);
+        }, 2000);
     }
 
     removeMoleAt(index) {
@@ -52,5 +76,12 @@ class WhackAMoleModel {
 
     incrementScore() {
         this.score++;
+    }
+
+    snakeClick() {
+        this.board.forEach(cell => {
+            cell.hasMole = false;
+            cell.hasSnake = true;
+        });
     }
 }

@@ -19,11 +19,12 @@ class WhackAMoleController {
         this.initializeView();
         this.runGameTimer();
         this.generateMoles();
+        this.generateSnakes();
         this.isGameActive = true;
     }
 
     isGameRunning() {
-        return this.model.timerId !== null || this.model.moleId !== null;
+        return this.model.timerId !== null || this.model.moleId !== null || this.model.snakeId !== null;
     }
 
     resetGame() {
@@ -45,7 +46,14 @@ class WhackAMoleController {
     }
 
     generateMoles() {
-        this.model.startMoleGeneration(cellId => this.view.displayMole(cellId));
+        this.model.startMoleGeneration(
+            cellId => this.view.displayMole(cellId),
+            cellId => this.view.hideMole(cellId)
+        );
+    }
+
+    generateSnakes() {
+        this.model.startSnakeGeneration(cellId => this.view.displaySnake(cellId));
     }
 
     handleCellClick(event) {
@@ -59,6 +67,10 @@ class WhackAMoleController {
                 this.model.incrementScore();
                 this.view.renderScore(this.model.score);
                 this.view.hideMole(cellId);
+            } else if (this.model.board[cellId].hasSnake) {
+                this.model.snakeClick();
+                this.view.showAllSnakes();
+                this.endGame();
             }
         }
     }
@@ -67,6 +79,5 @@ class WhackAMoleController {
         this.model.stopAll();
         this.view.activateStartButton();
         this.isGameActive = false;
-        alert('Time is Over!');
     }
 }
